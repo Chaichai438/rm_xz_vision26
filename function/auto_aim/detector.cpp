@@ -4,7 +4,7 @@ namespace xz_vision
 {
   Detector::Detector(const std::string& config_path, bool debug)
       : classifier_(config_path)
-      , debug_(1)
+      , debug_(0)
   {
     auto yaml = YAML::LoadFile(config_path);
 

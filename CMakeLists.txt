@@ -50,10 +50,13 @@ add_executable(auto_buff_test test/auto_buff_test.cpp)
 add_executable(auto_buff_main test/auto_buff_main.cpp)
 add_executable(trad_cv_test test/trad_cv_test.cpp)
 add_executable(camera_detect_test test/camera_detect_test.cpp)
+add_executable(auto_aim_test test/auto_aim_test.cpp)
+add_executable(gimbal_response_test test/gimbal_response_test.cpp)
 
 # add_executable(exit_test test/exit_test.cpp)
 target_link_libraries(auto_buff_test ${OpenCV_LIBS} auto_buff ecu yaml-cpp tools fmt::fmt)
 target_link_libraries(auto_buff_main ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
+target_link_libraries(gimbal_response_test ${OpenCV_LIBS} ecu yaml-cpp tools fmt::fmt)
 target_link_libraries(camera_detect_test PRIVATE
     ${OpenCV_LIBS}
     auto_buff
@@ -66,6 +69,20 @@ target_link_libraries(camera_detect_test PRIVATE
     ${CERES_LIBRARIES}
     ${MVCAMERA_CONTROL_LIB} # 添加海康相机库
     ${LIBUSB_LIB} # 添加libusb库
+)
+
+target_link_libraries(auto_aim_test PRIVATE
+    ${OpenCV_LIBS}
+    auto_aim
+    tools
+    ecu
+    yaml-cpp
+    fmt::fmt
+    spdlog::spdlog
+    openvino::runtime
+    ${CERES_LIBRARIES}
+    ${MVCAMERA_CONTROL_LIB}
+    ${LIBUSB_LIB}
 )
 
 # target_link_libraries(auto_buff_test PRIVATE

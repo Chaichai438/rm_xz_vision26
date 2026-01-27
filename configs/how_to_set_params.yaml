@@ -52,8 +52,12 @@ classify_model: /home/chaichai/project/rm_xz_vision26/assets/tiny_resnet.onnx
 
 #####--------相机曝光--------#####
 camera_name: "hikrobot"
-exposure_ms: 18
+exposure_ms: 20
+# hikrobot参数
 gain: 20
+
+# daheng参数
+gamma: 10
 vid_pid: "2bdf:0001"
 ####---------相机参数-------#####
 R_gimbal2imubody: [1, 0, 0, 0, 1, 0, 0, 0, 1]

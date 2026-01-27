@@ -218,27 +218,32 @@ namespace ecu
 
     const uint8_t FRAME_HEAD = 0xED;
     const uint8_t FRAME_TAIL = 0xEC;
-    const size_t FRAME_LEN = 12;
+    const size_t FRAME_LEN = 14;
 
     uint8_t frame[FRAME_LEN] = {0};
 
     // 帧头
     frame[0] = FRAME_HEAD;
 
+    frame[1] = 0xFC;
+
     // yaw（float，小端）
-    memcpy(&frame[1], &command.yaw, sizeof(float));
+    memcpy(&frame[2], &command.pitch, sizeof(float));
 
     // pitch（float，小端）
-    memcpy(&frame[5], &command.pitch, sizeof(float));
+    memcpy(&frame[6], &command.yaw, sizeof(float));
 
     // 发射标志
-    frame[9] = 0x00; // 0x77 单发, 0x88 连发, 其他禁止
+    frame[10] = 0x00; // 0x77 单发, 0x88 连发, 其他禁止
 
     // 模式标志
-    frame[10] = 0x00; // 0x55 风车自动, 0x00 装甲板
+    frame[11] = 0x00; // 0x55 能量机关, 0x00 装甲板
+
+    // 瞄准id
+    frame[12] = 0x00;
 
     // 帧尾
-    frame[11] = FRAME_TAIL;
+    frame[13] = FRAME_TAIL;
 
     // 发送数据
     ssize_t written = write(fd_, frame, FRAME_LEN);

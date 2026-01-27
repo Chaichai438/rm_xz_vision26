@@ -6,6 +6,7 @@
 #include <iomanip>
 
 #include "function/auto_aim/detector.hpp"
+#include "function/auto_aim/solver.hpp"
 #include "tools/exiter.hpp"
 #include "tools/draw_tool.hpp"
 #include "tools/logger.hpp"
@@ -33,6 +34,7 @@ int main(int argc, char* argv[])
 
   ecu::Camera Camera(config_path);
   xz_vision::Detector detector(config_path, true);
+  xz_vision::Solver solver(config_path);
 
   // --- 定义 FPS 统计变量 ---
   int frame_count = 0;            // 帧计数器
@@ -54,6 +56,27 @@ int main(int argc, char* argv[])
 
     // 2. 算法处理
     auto armors = detector.detect(raw_img);
+
+    for (auto& armor : armors) {
+      solver.solve(armor);
+
+      if (armor.xyz_in_world.norm() > 0.1 && armor.xyz_in_world.norm() < 10.0) {
+        // 1. 格式化字符串
+        std::string text =
+            fmt::format("Pos:({:.2f},{:.2f},{:.2f})m, Dist:{:.2f}m", armor.xyz_in_world[0],
+                        armor.xyz_in_world[1], armor.xyz_in_world[2], armor.xyz_in_world.norm());
+
+        // 2. 打印到日志
+        tools::logger()->info("{}", text);
+
+        // 3. 绘制到图像
+        cv::Point text_pos(10, 30);
+
+        // 绘制文字 (参数：图像, 内容, 位置, 字体, 缩放, 颜色, 粗细)
+        cv::putText(raw_img, text, text_pos, cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0),
+                    2);
+      }
+    }
 
     // 3. 计时结束
     auto end = std::chrono::steady_clock::now();

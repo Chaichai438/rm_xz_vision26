@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 set(OpenVINO_DIR "/home/c/opt/intel/openvino_ubuntu22_2025/runtime/cmake")
 
 # 移除重复的find_package，依赖在主CMakeLists.txt中已经查找
-# find_package(yaml-cpp REQUIRED) 
+# find_package(yaml-cpp REQUIRED)
 # find_package(OpenVINO REQUIRED)
 # find_package(Ceres REQUIRED)
 
@@ -13,7 +13,7 @@ add_library(ecu STATIC
     hikrobot/hikrobot.cpp
 )
 
-target_include_directories(ecu PUBLIC 
+target_include_directories(ecu PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/hikrobot/include
 )
