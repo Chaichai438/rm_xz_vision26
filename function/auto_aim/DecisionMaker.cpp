@@ -87,18 +87,18 @@ namespace xz_vision
         config_.yaw_offset = yaml.doubles["yaw_offset"] * M_PI / 180.0;
       if (yaml.doubles.find("pitch_offset") != yaml.doubles.end())
         config_.pitch_offset = yaml.doubles["pitch_offset"] * M_PI / 180.0;
-      if (yaml.doubles.find("comming_angle") != yaml.doubles.end())
-        config_.comming_angle = yaml.doubles["comming_angle"] * M_PI / 180.0;
-      if (yaml.doubles.find("leaving_angle") != yaml.doubles.end())
-        config_.leaving_angle = yaml.doubles["leaving_angle"] * M_PI / 180.0;
-      if (yaml.doubles.find("fire_thresh") != yaml.doubles.end())
-        config_.fire_thresh = yaml.doubles["fire_thresh"];
-      if (yaml.doubles.find("decision_speed") != yaml.doubles.end())
-        config_.decision_speed = yaml.doubles["decision_speed"];
-      if (yaml.doubles.find("high_speed_delay_time") != yaml.doubles.end())
-        config_.high_speed_delay_time = yaml.doubles["high_speed_delay_time"];
-      if (yaml.doubles.find("low_speed_delay_time") != yaml.doubles.end())
-        config_.low_speed_delay_time = yaml.doubles["low_speed_delay_time"];
+      // if (yaml.doubles.find("comming_angle") != yaml.doubles.end())
+      //   config_.comming_angle = yaml.doubles["comming_angle"] * M_PI / 180.0;
+      // if (yaml.doubles.find("leaving_angle") != yaml.doubles.end())
+      //   config_.leaving_angle = yaml.doubles["leaving_angle"] * M_PI / 180.0;
+      // if (yaml.doubles.find("fire_thresh") != yaml.doubles.end())
+      //   config_.fire_thresh = yaml.doubles["fire_thresh"];
+      // if (yaml.doubles.find("decision_speed") != yaml.doubles.end())
+      //   config_.decision_speed = yaml.doubles["decision_speed"];
+      // if (yaml.doubles.find("high_speed_delay_time") != yaml.doubles.end())
+      //   config_.high_speed_delay_time = yaml.doubles["high_speed_delay_time"];
+      // if (yaml.doubles.find("low_speed_delay_time") != yaml.doubles.end())
+      //   config_.low_speed_delay_time = yaml.doubles["low_speed_delay_time"];
 
       // 射击参数
       if (yaml.doubles.find("first_tolerance") != yaml.doubles.end())

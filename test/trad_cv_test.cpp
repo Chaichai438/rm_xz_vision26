@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
   ecu::Camera Camera(config_path);
   xz_vision::Detector detector(config_path, true);
   xz_vision::Solver solver(config_path);
+  tools::Plotter plotter;
 
   // --- 定义 FPS 统计变量 ---
   int frame_count = 0;            // 帧计数器
@@ -75,6 +76,15 @@ int main(int argc, char* argv[])
         // 绘制文字 (参数：图像, 内容, 位置, 字体, 缩放, 颜色, 粗细)
         cv::putText(raw_img, text, text_pos, cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0),
                     2);
+
+        nlohmann::json data;
+        const auto& armor = armors.front();
+        data["armor_x"] = armor.xyz_in_world[0];
+        data["armor_y"] = armor.xyz_in_world[1];
+        data["armor_yaw"] = armor.ypr_in_world[0] * 57.3;
+        data["armor_yaw_raw"] = armor.yaw_raw * 57.3;
+        data["armor_center_x"] = armor.center_norm.x;
+        data["armor_center_y"] = armor.center_norm.y;
       }
     }
 
