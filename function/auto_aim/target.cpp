@@ -30,11 +30,13 @@ namespace xz_vision
     auto center_y = xyz[1] + r * std::sin(ypr[0]);
     auto center_z = xyz[2];
 
-    // x vx y vy z vz a w r l h
-    // a: angle
-    // w: angular velocity
-    // l: r2 - r1
-    // h: z2 - z1
+    //  十一维向量
+    //  x vx y vy z vz a w r l h
+    //  a: angle
+    //  w: angular velocity
+    //  l: r2 - r1
+    //  h: z2 - z1
+
     Eigen::VectorXd x0{{center_x, 0, center_y, 0, center_z, 0, ypr[0], 0, r, 0, 0}}; // 初始化预测量
     Eigen::MatrixXd P0 = P0_dig.asDiagonal();
 

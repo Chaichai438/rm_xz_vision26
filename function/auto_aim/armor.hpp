@@ -134,7 +134,6 @@ namespace xz_vision
     Armor(int color_id, int num_id, float confidence, const cv::Rect& box,
           std::vector<cv::Point2f> armor_keypoints, cv::Point2f offset);
 
-    // 神经网络构造函数
     Eigen::Vector3d xyz_in_camera; // 在相机坐标系下的位置
     Eigen::Vector3d xyz_in_gimbal; // 在云台坐标系下的位置
     Eigen::Vector3d xyz_in_world;  // 在世界坐标系下的位置

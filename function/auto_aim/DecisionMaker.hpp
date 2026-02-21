@@ -14,7 +14,6 @@
 
 namespace xz_vision
 {
-
   // 决策指令
   struct DecisionCommand {
     bool valid{false};                               // 指令是否有效
@@ -177,4 +176,4 @@ namespace xz_vision
 
 } // namespace xz_vision
 
-#endif // AUTO_AIM__DECISION_MAKER_HPP
+#endif // AUTO_AIM__DECISION_MAKER_HPPexi
