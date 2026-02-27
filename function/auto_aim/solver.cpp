@@ -9,6 +9,7 @@
 
 namespace xz_vision
 {
+  // 实际装甲板、灯条的宽度
   constexpr double LIGHTBAR_LENGTH = 56e-3;    // m
   constexpr double BIG_ARMOR_WIDTH = 230e-3;   // m
   constexpr double SMALL_ARMOR_WIDTH = 135e-3; // m
@@ -44,6 +45,7 @@ const std::vector<cv::Point3f> SMALL_ARMOR_POINTS{
     cv::eigen2cv(camera_matrix, camera_matrix_);
     cv::eigen2cv(distort_coeffs, distort_coeffs_);
   }
+
   Eigen::Matrix3d Solver::R_gimbal2world() const { return R_gimbal2world_; }
 
   void Solver::set_R_gimbal2world(const Eigen::Quaterniond& q)
@@ -72,6 +74,7 @@ const std::vector<cv::Point3f> SMALL_ARMOR_POINTS{
     cv::cv2eigen(rmat, R_armor2camera);
     Eigen::Matrix3d R_armor2gimbal = R_camera2gimbal_ * R_armor2camera;
     Eigen::Matrix3d R_armor2world = R_gimbal2world_ * R_armor2gimbal;
+
     armor.ypr_in_gimbal = tools::eulers(R_armor2gimbal, 2, 1, 0);
     armor.ypr_in_world = tools::eulers(R_armor2world, 2, 1, 0);
 

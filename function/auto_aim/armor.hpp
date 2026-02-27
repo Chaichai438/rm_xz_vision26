@@ -139,8 +139,9 @@ namespace xz_vision
     Eigen::Vector3d xyz_in_world;  // 在世界坐标系下的位置
 
     // 姿态信息（单位：弧度）
-    Eigen::Vector3d ypr_in_gimbal; // 在云台坐标系下的偏航(yaw)、俯仰(pitch)、滚转(roll)
-    Eigen::Vector3d ypr_in_world;  // 在世界坐标系下的欧拉角
+    Eigen::Vector3d ypr_in_gimbal; // 在云台坐标系下的偏航(yaw)、俯仰(pitch)、滚转(roll),装甲板平面相对于云台指向的偏角。例如，如果
+                                   // yaw 为 0，说明装甲板正对着你的枪口。
+    Eigen::Vector3d ypr_in_world;  // 在世界坐标系下的欧拉角,装甲板相对于整个赛场的偏角。
     Eigen::Vector3d ypd_in_world;  // 在世界坐标系下的偏航(yaw)、俯仰(pitch)、距离(distance)
 
     // 用于优化的原始数据

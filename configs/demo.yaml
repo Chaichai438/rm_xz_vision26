@@ -48,7 +48,7 @@ gain: 20
 gamma: 10
 vid_pid: "2bdf:0001"
 
-#####--------DecisionMaker参数--------#####
+#####--------Aimer参数--------#####
 yaw_offset:
 pitch_offset:
 comming_angle:
@@ -57,6 +57,7 @@ fire_thresh:
 decision_speed:
 high_speed_delay_time:
 low_speed_delay_time:
+
 #####-----神经网络参数-----#####
 yolo_name: yolov8
 yolov8_model_path: /home/zzy/rm_xz_vision26/assets/yolov8.xml
