@@ -3,12 +3,14 @@
 #include <opencv2/opencv.hpp>
 #include <chrono>
 #include <string>
-#include "GxIAPI.h"
-#include "DxImageProc.h"
+#include "ecu/daheng/include/GxIAPI.h"
+#include "ecu/daheng/include/DxImageProc.h"
 
-namespace ecu::io
+#include "ecu/camera.hpp"
+
+namespace ecu
 {
-  class Daheng
+  class Daheng : public ecu::CameraBase
   {
   public:
     /**
@@ -35,4 +37,4 @@ namespace ecu::io
 
     void checkStatus(GX_STATUS status, const std::string& msg);
   };
-} // namespace ecu::io
+} // namespace ecu

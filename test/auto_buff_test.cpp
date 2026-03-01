@@ -4,10 +4,9 @@
 using namespace cv;
 using namespace std;
 
-const std::string keys =
-    "{help h usage ? |     | 输出命令行参数说明 }"
-    "{@config-path c | ../configs/test.yaml | "
-    "yaml配置文件的路径}";
+const std::string keys = "{help h usage ? |     | 输出命令行参数说明 }"
+                         "{@config-path c | ../configs/test.yaml | "
+                         "yaml配置文件的路径}";
 
 int main(int argc, char* argv[])
 {
@@ -18,7 +17,7 @@ int main(int argc, char* argv[])
   }
   auto config_path = cli.get<std::string>(0);
 
-  VideoCapture cap("/home/chaichai/project/rm_xz_vision26/assets/powerrune.mp4");
+  VideoCapture cap("/home/chaichai/project/rm_xz_vision26/assets/04_origin.mp4");
   if (!cap.isOpened()) {
     std::cerr << "无法打开视频文件!" << std::endl;
     return -1;

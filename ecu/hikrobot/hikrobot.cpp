@@ -6,7 +6,7 @@
 
 using namespace std::chrono_literals;
 
-namespace io
+namespace ecu
 {
   HikRobot::HikRobot(double exposure_ms, double gain, const std::string& vid_pid)
       : exposure_us_(exposure_ms * 1e3)
@@ -253,4 +253,4 @@ namespace io
     libusb_close(handle);
   }
 
-} // namespace io
+} // namespace ecu

@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace ecu::io
+namespace ecu
 {
   Daheng::Daheng(double exposure_ms, double gamma, const std::string& vid_pid)
   {
@@ -87,4 +87,4 @@ namespace ecu::io
     delete[] pRawBuffer_;
     delete[] pRGBBuffer_;
   }
-} // namespace ecu::io
+} // namespace ecu

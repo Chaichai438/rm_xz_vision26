@@ -2,8 +2,12 @@
 #include "tools/plotter.hpp"
 #include "tools/exiter.hpp"
 
+/*
+      测试plotjuggler是否运行正常
+*/
 int main()
 {
+
   tools::Plotter plotter;
   tools::Exiter exiter;
   nlohmann::json data;

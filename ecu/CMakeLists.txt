@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 set(OpenVINO_DIR "/home/c/opt/intel/openvino_ubuntu22_2025/runtime/cmake")
+set(DAHENG_ROOT ${CMAKE_SOURCE_DIR}/daheng)
 
 # 移除重复的find_package，依赖在主CMakeLists.txt中已经查找
 find_package(yaml-cpp REQUIRED)
@@ -14,6 +15,7 @@ add_library(ecu STATIC
     serial_port.cpp
     hikrobot/hikrobot.cpp
     gimbal/gimbal.cpp
+    daheng/daheng.cpp
 )
 
 # hikrobot
@@ -34,6 +36,29 @@ target_include_directories(ecu PUBLIC
 )
 
 target_link_directories(ecu PUBLIC serial yaml-cpp)
+
+# 1. 设置头文件路径
+target_include_directories(ecu PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/daheng/include)
+
+# 2. 根据架构选择对应的库路径
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    set(DAHENG_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/daheng/lib/x86_64)
+else()
+    message(FATAL_ERROR "Unsupported architecture for Daheng SDK: ${CMAKE_SYSTEM_PROCESSOR}!")
+endif()
+
+# 3. 添加库搜索目录
+target_link_directories(ecu PUBLIC ${DAHENG_LIB_DIR})
+
+# 4. 链接大恒的核心动态库
+# gxiapi: 基础相机控制
+# dximageproc: 图像处理（如 DxRaw8toRGB24）
+target_link_libraries(ecu PUBLIC
+    -lpthread
+    -lboost_system
+    libgxiapi.so
+    gxiapi
+)
 
 # 移除直接链接，在可执行文件中链接
 # target_link_libraries(ecu openvino::runtime ${CERES_LIBRARIES} yaml-cpp)

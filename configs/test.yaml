@@ -1,22 +1,24 @@
 color: blue
+
 # 能量机关参数
   # 是否启用调试(显示灰度图)
 whether_use_debug_pre: true
 whether_use_debug_arrow: true
 whether_use_debug_local_roi: true
 whether_use_debug_armor: true
+whether_use_debug_centerR: true
 
 # 传统视觉参数
   # image size
 image_width: 1280
 image_height: 1024
   # 阈值
-param_thresh: 110
+param_thresh: 130
   # 条件满足时赋予的最大值
 param_maxval: 255
   # 矩形核
-param_kernel_width: 3
-param_kernel_height: 3
+param_kernel_width: 2
+param_kernel_height: 2
 
 # arrow
 min_arrow_lightline_area: 100

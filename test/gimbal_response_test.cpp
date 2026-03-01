@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
   cmd.yaw = 30.5f;    // 向右偏转 30.5 度
   cmd.pitch = -10.2f; // 向下俯仰 10.2 度
   cmd.shoot = 0x00;   // 单发射击
-  cmd.statu = 0x00;   // 装甲板模式
+  // cmd.statu = 0x00;   // 装甲板模式
 
   serialport.send(cmd); // 发送控制指令
 

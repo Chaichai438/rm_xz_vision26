@@ -32,6 +32,7 @@ namespace auto_buff
     whether_use_debug_arrow = yaml["whether_use_debug_arrow"].as<bool>();
     whether_use_debug_local_roi = yaml["whether_use_debug_local_roi"].as<bool>();
     whether_use_debug_armor = yaml["whether_use_debug_armor"].as<bool>();
+    whether_use_debug_centerR = yaml["whether_use_debug_centerR"].as<bool>();
 
     image_width = yaml["image_width"].as<float>();
     image_height = yaml["image_height"].as<float>();
@@ -314,18 +315,17 @@ namespace auto_buff
     std::vector<LightLine> lightlines;
     find_arrow_lightlines(m_image_arrow, lightlines, m_global_roi);
 
+    // 灯条匹配箭头
+    if (match_arrow(m_arrow, lightlines, m_global_roi) == false) {
+      return false;
+    }
+
     if (whether_use_debug_arrow) {
       for (const auto& lightline : lightlines) {
         draw(lightline, GREEN);
       }
       draw(m_arrow.m_rotated_rect, WHITE, 2);
-
       cv::imshow("arrow", m_image_show);
-    }
-
-    // 灯条匹配箭头
-    if (match_arrow(m_arrow, lightlines, m_global_roi) == false) {
-      return false;
     }
 
     return true;
@@ -391,7 +391,7 @@ namespace auto_buff
     }
     // 判断面积
 
-    // std::cout << "arrow_area: " << arrow.m_area << std::endl;
+    std::cout << "arrow_area: " << arrow.m_area << std::endl;
     if (arrow.m_area > max_arrow_area) {
       return false;
     }
@@ -414,7 +414,7 @@ namespace auto_buff
 
     for (const auto& contour : contours) {
       LightLine lightline(contour, roi);
-      // std::cout << "lightline.m_area: " << lightline.m_area << std::endl;
+
       // 判断面积
       if (tools::inRange(lightline.m_area, min_arrow_lightline_area, max_arrow_lightline_area) ==
           false) {
@@ -810,23 +810,30 @@ namespace auto_buff
   bool BuffDetection::detect_centerR()
   {
     m_image_center = (m_image_armor & m_local_mask)(m_center_roi);
+
+    cv::imshow("centerR", m_image_center);
+
     // 寻找中心灯条，可能是多个
     std::vector<LightLine> lightlines;
     if (findCenterLightlines(m_image_center, lightlines, m_global_roi, m_center_roi) == false) {
       return false;
     }
-#if SHOW_IMAGE >= 2
-    for (const auto& lightline : lightlines) {
-      draw(lightline, YELLOW, 1, m_center_roi);
-    }
-#endif
+
     // 从灯条中寻找中心 R
     if (find_centerR(m_centerR, lightlines, m_arrow, m_armor) == false) {
       return false;
     }
-#if SHOW_IMAGE >= 1
-    draw(m_centerR.m_bounding_rect, cv::Scalar(225, 225, 225), 2, m_center_roi);
-#endif
+
+    if (whether_use_debug_centerR) {
+      for (const auto& lightline : lightlines) {
+        draw(lightline, YELLOW, 1, m_center_roi); // 黄色框
+      }
+
+      draw(m_centerR.m_bounding_rect, cv::Scalar(225, 225, 225), 2, m_center_roi);
+
+      cv::imshow("arrow", m_image_show);
+    }
+
     return true;
   }
 
@@ -917,9 +924,9 @@ namespace auto_buff
     m_global_roi =
         cv::Rect2f(m_centerR.m_x - 0.5 * width, m_centerR.m_y - 0.5 * width, width, width);
     tools::reset_roi(m_global_roi, image_height, image_width);
-#if SHOW_IMAGE >= 2
+
     cv::rectangle(m_image_show, m_global_roi, DRAW_COLOR);
-#endif
+    cv::imshow("global_roi", m_image_show);
   }
 
   /**

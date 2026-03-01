@@ -196,6 +196,7 @@ namespace auto_buff
     bool whether_use_debug_arrow;
     bool whether_use_debug_local_roi;
     bool whether_use_debug_armor;
+    bool whether_use_debug_centerR;
 
     double param_thresh;
     double param_maxval;

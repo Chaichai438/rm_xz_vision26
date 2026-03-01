@@ -11,7 +11,7 @@
 #include "ecu/camera.hpp"
 #include "tools/thread_safe_queue.hpp"
 
-namespace io
+namespace ecu
 {
   class HikRobot : public ecu::CameraBase
   {
@@ -50,6 +50,6 @@ namespace io
     void reset_usb() const;
   };
 
-} // namespace io
+} // namespace ecu
 
 #endif // IO__HIKROBOT_HPP
