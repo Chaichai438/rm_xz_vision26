@@ -35,7 +35,7 @@ namespace xz_vision
     double min_confidence_;
     double max_rectangular_error_;
 
-    bool debug_;
+    bool armor_debug_;
     std::string save_path_;
 
     bool check_geometry(const Lightbar& lightbar) const;

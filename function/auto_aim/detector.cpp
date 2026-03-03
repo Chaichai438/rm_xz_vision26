@@ -4,10 +4,11 @@ namespace xz_vision
 {
   Detector::Detector(const std::string& config_path, bool debug)
       : classifier_(config_path)
-      , debug_(0)
+
   {
     auto yaml = YAML::LoadFile(config_path);
 
+    armor_debug_ = yaml["armor_debug_"].as<bool>();
     threshold_ = yaml["threshold"].as<double>();
     max_angle_error_ = yaml["max_angle_error"].as<double>() / 57.3; // degree to rad
     min_lightbar_ratio_ = yaml["min_lightbar_ratio"].as<double>();
@@ -111,7 +112,7 @@ namespace xz_vision
 
     armors.remove_if([&](const Armor& a) { return a.duplicated; });
 
-    if (debug_)
+    if (armor_debug_)
       show_result(binary_img, bgr_img, lightbars, armors, frame_count);
 
     return armors;

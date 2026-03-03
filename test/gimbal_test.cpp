@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
   ecu::Gimbal gimbal(config_path);
 
   std::cout << "--- Gimbal Communication Test Start ---" << std::endl;
-  std::cout << "Testing Protocol: Tx (14 bytes), Rx (17 bytes)" << std::endl;
 
   // 2. 构造模拟的视觉目标数据
   ecu::VisionToGimbal test_data;
@@ -35,14 +34,12 @@ int main(int argc, char* argv[])
 
   int count = 0;
   while (true) {
-    // A. 发送数据给 STM32 (频率约 100Hz)
+    //  发送数据给 STM32 (频率约 100Hz)
     gimbal.send(test_data);
 
-    // B. 获取并打印 STM32 反馈的数据 (来自 read_thread)
     auto state = gimbal.state();
     auto mode = gimbal.mode();
 
-    // 使用 fixed 和 setprecision 让输出更整齐
     std::cout << "\r[Count: " << std::setw(5) << count++ << "] "
               << "Mode: " << gimbal.str(mode) << " | "
               << "MCU_Pitch: " << std::fixed << std::setprecision(2) << std::setw(7) << state.pitch
@@ -51,7 +48,6 @@ int main(int argc, char* argv[])
               << " | "
               << "BulletSpeed: " << state.bullet_speed << " m/s" << std::flush;
 
-    // C. 动态改变一些测试数据，观察 STM32 是否有反应
     test_data.yaw += 0.01f;
     if (test_data.yaw > 180.0f)
       test_data.yaw = -180.0f;

@@ -10,56 +10,60 @@
 #include "tools/logger.hpp"
 #include "tools/rotary_tool.hpp"
 
-const std::string keys =
-    "{help h usage ? |                        | 输出命令行参数说明 }"
-    "{@config-path   | /home/chaichai/project/rm_xz_vision26/configs/how_to_set_params.yaml   | "
-    "yaml配置文件的路径}"
-    "{tradition t    |  false                 | 是否使用传统方法识别}";
+const std::string keys = "{help h usage ? |               | 输出命令行参数说明 }"
+                         "{@config-path c |               | yaml配置文件的路径}";
 
 int main(int argc, char* argv[])
 {
-  // 读取命令行参数
   cv::CommandLineParser cli(argc, argv, keys);
   if (cli.has("help")) {
     cli.printMessage();
     return 0;
   }
-  auto config_path = cli.get<std::string>(0);
-  auto use_tradition = cli.get<bool>("tradition");
 
-  tools::Exiter exiter;
+  auto config_path = cli.get<std::string>(0);
 
   ecu::Camera camera(config_path);
-  xz_vision::Detector detector(config_path, true);
-  xz_vision::YOLO yolo(config_path, true);
+  tools::Exiter exiter;
 
-  std::chrono::steady_clock::time_point timestamp;
+  // --- 定义 FPS 统计变量 ---
+  int frame_count = 0;            // 帧计数器
+  double total_time = 0;          // 累积耗时
+  const int stats_interval = 100; // 统计间隔（100帧）
 
   while (!exiter.exit()) {
-    cv::Mat img;
-    std::list<xz_vision::Armor> armors;
+    // 计时
+    auto start = std::chrono::steady_clock::now();
 
-    camera.read(img, timestamp);
+    cv::Mat raw_img;
+    std::chrono::steady_clock::time_point timestamp;
 
-    if (img.empty())
-      break;
+    camera.read(raw_img, timestamp);
 
-    auto last = std::chrono::steady_clock::now();
+    cv::imshow("img", raw_img);
 
-    if (use_tradition) {
-      auto start = std::chrono::steady_clock::now();
-      armors = detector.detect(img);
-      auto endl = std::chrono::steady_clock::now();
+    // 3. 计时结束
+    auto end = std::chrono::steady_clock::now();
+
+    // 4. 统计逻辑
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    total_time += duration.count(); // 累加微秒
+    frame_count++;
+
+    // 5. 每隔 100 帧计算并输出一次
+    if (frame_count >= stats_interval) {
+      double avg_ms = (total_time / stats_interval) / 1000.0; // 100帧平均耗时（毫秒）
+      double avg_fps = 1000.0 / avg_ms;                       // 平均FPS
+
+      std::cout << "[INFO] Avg Time (last 100 frames): " << std::fixed << std::setprecision(2)
+                << avg_ms << " ms | Avg FPS: " << avg_fps << std::endl;
+
+      // 重置计数器
+      frame_count = 0;
+      total_time = 0;
     }
 
-    else
-      armors = yolo.detect(img);
-
-    auto now = std::chrono::steady_clock::now();
-    auto dt = tools::delta_time(now, last);
-    tools::logger()->info("{:.2f} fps", 1 / dt);
-
-    auto key = cv::waitKey(33);
+    auto key = cv::waitKey(1);
     if (key == 'q')
       break;
   }

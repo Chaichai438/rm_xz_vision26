@@ -2,10 +2,12 @@
 #include <fmt/core.h>
 
 #include "ecu/camera.hpp"
+#include "ecu/gimbal/gimbal.hpp"
+
 #include "function/auto_aim/detector.hpp"
 #include "function/auto_aim/solver.hpp"
 #include "function/auto_aim/tracker.hpp"
-#include "function/auto_aim/DecisionMaker.hpp"
+#include "function/auto_aim/aimer.hpp"
 
 #include "tools/exiter.hpp"
 #include "tools/logger.hpp"
@@ -25,10 +27,13 @@ int main(int argc, char* argv[])
 
   tools::Exiter exiter;
   ecu::Camera camera(config_path);
+
+  ecu::Gimbal gimbal(config_path);
+
   xz_vision::Detector detector(config_path);
   xz_vision::Solver solver(config_path);
   xz_vision::Tracker tracker(config_path, solver);
-  xz_vision::DecisionMaker decision_maker(config_path);
+  xz_vision::Aimer aimer(config_path);
 
   tools::Plotter plotter;
 
@@ -36,13 +41,25 @@ int main(int argc, char* argv[])
   cv::Mat img;
   while (!exiter.exit()) {
     camera.read(img, timestamp);
+    if (img.empty())
+      continue;
 
-    auto yolo_start = std::chrono::steady_clock::now();
+    auto detect_start = std::chrono::steady_clock::now();
     auto armors = detector.detect(img);
 
     auto tracker_start = std::chrono::steady_clock::now();
     auto targets = tracker.track(armors, timestamp);
 
     auto aimer_start = std::chrono::steady_clock::now();
+    auto command = aimer.aim(targets, timestamp, 27, false);
+
+    // 构造发送给云台的数据包
+    ecu::VisionToGimbal tx_data;
+    tx_data.pitch = command.pitch;
+    tx_data.yaw = command.yaw;
+    tx_data.mode = static_cast<uint8_t>(gimbal.mode());
+    gimbal.send(tx_data);
   }
+
+  return 0;
 }

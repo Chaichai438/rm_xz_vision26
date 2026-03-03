@@ -8,4 +8,5 @@ add_library(tools OBJECT
     plotter.cpp
     rotary_tool.cpp
     extended_kalman_filter.cpp
+    trajectory.cpp
 )

@@ -18,10 +18,12 @@
 using namespace cv;
 using namespace std;
 
-const std::string keys =
-    "{help h usage ? |     | 输出命令行参数说明 }"
-    "{@config-path c | /home/chaichai/project/rm_xz_vision26/configs/how_to_set_params.yaml | "
-    "yaml配置文件的路径}";
+/*
+   传统视觉与解算的测试程序
+*/
+
+const std::string keys = "{help h usage ? |     | 输出命令行参数说明 }"
+                         "{@config-path c |     | yaml配置文件的路径}";
 
 int main(int argc, char* argv[])
 {

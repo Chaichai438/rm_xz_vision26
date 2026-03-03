@@ -1,0 +1,11 @@
+# hikrobot参数
+camera_name: "hikrobot"
+exposure_ms: 20
+gain: 20
+vid_pid: "2bdf:0001"
+
+# # daheng参数
+# camera_name: "daheng"
+# exposure_ms: 20
+# gamma: 10
+# vid_pid: "2bdf:0001"

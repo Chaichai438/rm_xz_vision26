@@ -23,9 +23,11 @@ namespace xz_vision
     high_speed_delay_time_ = yaml["high_speed_delay_time"].as<double>();
     low_speed_delay_time_ = yaml["low_speed_delay_time"].as<double>();
     decision_speed_ = yaml["decision_speed"].as<double>();
+
     if (yaml["left_yaw_offset"].IsDefined() && yaml["right_yaw_offset"].IsDefined()) {
       left_yaw_offset_ = yaml["left_yaw_offset"].as<double>() / 57.3;   // degree to rad
       right_yaw_offset_ = yaml["right_yaw_offset"].as<double>() / 57.3; // degree to rad
+
       tools::logger()->info("[Aimer] successfully loading shootmode");
     }
   }
@@ -145,6 +147,7 @@ namespace xz_vision
     return {true, false, yaw, pitch};
   }
 
+  // 这是双枪管哨兵模式
   // io::Command Aimer::aim(std::list<Target> targets, std::chrono::steady_clock::time_point
   // timestamp,
   //                        double bullet_speed, io::ShootMode shoot_mode, bool to_now)
@@ -237,4 +240,4 @@ namespace xz_vision
     return {false, armor_xyza_list[0]};
   }
 
-} // namespace xz_visiond
+} // namespace xz_vision
