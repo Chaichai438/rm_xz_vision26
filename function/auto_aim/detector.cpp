@@ -1,14 +1,16 @@
 #include "detector.hpp"
+
 #include <filesystem>
 namespace xz_vision
 {
   Detector::Detector(const std::string& config_path, bool debug)
       : classifier_(config_path)
+      , armor_debug_(0)
 
   {
     auto yaml = YAML::LoadFile(config_path);
 
-    armor_debug_ = yaml["armor_debug_"].as<bool>();
+    // armor_debug_ = yaml["armor_debug"].as<bool>();
     threshold_ = yaml["threshold"].as<double>();
     max_angle_error_ = yaml["max_angle_error"].as<double>() / 57.3; // degree to rad
     min_lightbar_ratio_ = yaml["min_lightbar_ratio"].as<double>();
@@ -20,10 +22,43 @@ namespace xz_vision
     min_confidence_ = yaml["min_confidence"].as<double>();
     max_rectangular_error_ = yaml["max_rectangular_error"].as<double>() / 57.3; // degree to rad
 
-    save_path_ = "patterns";
-    std::filesystem::create_directory(save_path_);
+    // save_path_ = "patterns";
+    // std::filesystem::create_directory(save_path_);
+
+    if (yaml["model_path"]) {
+      model_path = yaml["model_path"].as<std::string>();
+    } else {
+      std::cerr << "错误：配置文件中缺少 'model_path'！" << std::endl;
+    }
+
+    std::cout << "model_path: " << model_path << std::endl;
+
+    if (yaml["device"]) {
+      device = yaml["device"].as<std::string>();
+    }
+
+    auto model = core.read_model(model_path);
+
+    // 神经网络模型加载
+    ov::preprocess::PrePostProcessor ppp(model);
+    ppp.input()
+        .tensor()
+        .set_element_type(ov::element::u8)
+        .set_layout("NHWC")
+        .set_color_format(ov::preprocess::ColorFormat::BGR);
+    ppp.input()
+        .preprocess()
+        .convert_element_type(ov::element::f32)
+        .convert_color(ov::preprocess::ColorFormat::RGB)
+        .scale(255.0f);
+    ppp.input().model().set_layout("NCHW");
+
+    model = ppp.build();
+    compiled_model = core.compile_model(model, device);
+    infer_request = compiled_model.create_infer_request();
   }
 
+  // 传统视觉
   std::list<Armor> Detector::detect(const cv::Mat& bgr_img, int frame_count)
   {
     // 彩色图转灰度图
@@ -118,53 +153,106 @@ namespace xz_vision
     return armors;
   }
 
-  bool Detector::detect(Armor& armor, const cv::Mat& bgr_img)
+  std::list<Armor> Detector::detect_onnx(const cv::Mat& frame, int frame_count)
   {
-    // 取得四个角点
-    auto tl = armor.points[0];
-    auto tr = armor.points[1];
-    auto br = armor.points[2];
-    auto bl = armor.points[3];
-    // 计算向量和调整后的点
-    auto lt2b = bl - tl;
-    auto rt2b = br - tr;
-    auto tl1 = (tl + bl) / 2 - lt2b;
-    auto bl1 = (tl + bl) / 2 + lt2b;
-    auto br1 = (tr + br) / 2 + rt2b;
-    auto tr1 = (tr + br) / 2 - rt2b;
-    auto tl2tr = tr1 - tl1;
-    auto bl2br = br1 - bl1;
-    auto tl2 = (tl1 + tr) / 2 - 0.75 * tl2tr;
-    auto tr2 = (tl1 + tr) / 2 + 0.75 * tl2tr;
-    auto bl2 = (bl1 + br) / 2 - 0.75 * bl2br;
-    auto br2 = (bl1 + br) / 2 + 0.75 * bl2br;
-    // 构造新的四个角点
-    std::vector<cv::Point> points = {tl2, tr2, br2, bl2};
-    auto armor_rotaterect = cv::minAreaRect(points);
-    cv::Rect boundingBox = armor_rotaterect.boundingRect();
-    // 检查boundingBox是否超出图像边界
-    if (boundingBox.x < 0 || boundingBox.y < 0 ||
-        boundingBox.x + boundingBox.width > bgr_img.cols ||
-        boundingBox.y + boundingBox.height > bgr_img.rows) {
-      return false;
+    // auto& cfg = rm_config::GetConfig();
+    std::list<Armor> results;
+
+    if (frame.empty()) {
+      return results;
     }
 
-    // 在图像上裁剪出这个矩形区域（ROI）
-    cv::Mat armor_roi = bgr_img(boundingBox);
-    if (armor_roi.empty()) {
-      return false;
+    // ========== 1. 深度学习检测获取分类信息 ==========
+    cv::Mat resized;
+    cv::resize(frame, resized, cv::Size(416, 416));
+
+    ov::Tensor input_tensor(ov::element::u8, {1, 416, 416, 3}, resized.data);
+    infer_request.set_input_tensor(input_tensor);
+    infer_request.infer();
+
+    auto output = infer_request.get_output_tensor(0);
+    float* data = output.data<float>();
+    auto shape = output.get_shape();
+    int channels = shape[1];
+    int anchors = shape[2];
+
+    cv::Mat res_mat(channels, anchors, CV_32F, data);
+    res_mat = res_mat.t();
+
+    float sx = (float)frame.cols / 416.0f;
+    float sy = (float)frame.rows / 416.0f;
+
+    // 存储深度学习结果
+    std::vector<std::tuple<int, float, cv::Rect>> dl_results;
+
+    for (int i = 0; i < anchors; i++) {
+      float* row = res_mat.ptr<float>(i);
+
+      auto max_ptr = std::max_element(row + 4, row + 4 + 15);
+      float conf = *max_ptr;
+      int cls_id = std::distance(row + 4, max_ptr);
+
+      if (conf < min_confidence_)
+        continue;
+
+      float cx = row[0] * sx;
+      float cy = row[1] * sy;
+      float w = row[2] * sx;
+      float h = row[3] * sy;
+
+      cv::Rect box(cx - w / 2, cy - h / 2, w, h);
+      dl_results.emplace_back(cls_id, conf, box);
     }
 
+    // ========== 2. 调用灯条检测版本获取精确角点 ==========
+    auto lightbar_armors = detect_lightbar_armors(frame, dl_results);
+
+    // ========== 3. 为每个灯条结果匹配分类信息 ==========
+    for (auto& armor : lightbar_armors) {
+      bool matched = false;
+      for (const auto& [cls_id, conf, box] : dl_results) {
+        if (box.contains(armor.center)) {
+          armor.class_id = cls_id;
+          armor.confidence = conf;
+          armor.box = box;
+
+          // 根据class_id设置color、name、type
+          if (cls_id >= 0 && cls_id < armor_properties.size()) {
+            auto [color, name, type] = armor_properties[cls_id];
+            armor.color = color;
+            armor.name = name;
+            armor.type = type;
+          }
+          matched = true;
+          break;
+        }
+      }
+
+      // 即使没有匹配的深度学习结果，也保留灯条检测结果（使用默认分类）
+      results.push_back(armor);
+    }
+
+    return results;
+  }
+
+  // ========== 灯条检测和配对函数 ==========
+  std::list<Armor>
+  Detector::detect_lightbar_armors(const cv::Mat& bgr_img,
+                                   const std::vector<std::tuple<int, float, cv::Rect>>& dl_results,
+                                   int frame_count)
+  {
     // 彩色图转灰度图
     cv::Mat gray_img;
-    cv::cvtColor(armor_roi, gray_img, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(bgr_img, gray_img, cv::COLOR_BGR2GRAY);
+
     // 进行二值化
     cv::Mat binary_img;
     cv::threshold(gray_img, binary_img, threshold_, 255, cv::THRESH_BINARY);
-    // cv::imshow("binary_img", binary_img);
+
     // 获取轮廓点
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(binary_img, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+
     // 获取灯条
     std::size_t lightbar_id = 0;
     std::list<Lightbar> lightbars;
@@ -176,58 +264,120 @@ namespace xz_vision
         continue;
 
       lightbar.color = get_color(bgr_img, contour);
-      // lightbar_points_corrector(lightbar, gray_img); //关闭PCA
       lightbars.emplace_back(lightbar);
       lightbar_id += 1;
     }
 
-    if (lightbars.size() < 2)
-      return false;
-
     // 将灯条从左到右排序
     lightbars.sort([](const Lightbar& a, const Lightbar& b) { return a.center.x < b.center.x; });
 
-    // 计算与 tl_roi, bl_roi 和 br_roi, tr_roi 距离最近的灯条
-    Lightbar* closest_left_lightbar = nullptr;
-    Lightbar* closest_right_lightbar = nullptr;
-    float min_distance_tl_bl = std::numeric_limits<float>::max();
-    float min_distance_br_tr = std::numeric_limits<float>::max();
-    for (auto& lightbar : lightbars) {
-      float distance_tl_bl =
-          cv::norm(tl - (lightbar.top + cv::Point2f(boundingBox.x, boundingBox.y))) +
-          cv::norm(bl - (lightbar.bottom + cv::Point2f(boundingBox.x, boundingBox.y)));
-      if (distance_tl_bl < min_distance_tl_bl) {
-        min_distance_tl_bl = distance_tl_bl;
-        closest_left_lightbar = &lightbar;
+    // 废弃原因：这个装甲板匹配并没有用到严格的几何筛选导致，不妨可以试一试
+    // 获取装甲板
+    // std::list<Armor> armors;
+    // for (auto left = lightbars.begin(); left != lightbars.end(); left++) {
+    //   for (auto right = std::next(left); right != lightbars.end(); right++) {
+    //     if (left->color != right->color)
+    //       continue;
+
+    //     // 暂时用-1的class_id，后面会用深度学习结果更新
+    //     auto armor = Armor(-1, 0.0f, cv::Rect(), *left, *right);
+
+    //     if (!check_geometry(armor))
+    //       continue;
+
+    //     // if (!check_type(armor))
+    //     //   continue;
+
+    //     armor.center_norm = get_center_norm(bgr_img, armor.center);
+    //     armors.emplace_back(armor);
+    //   }
+    // }
+
+    std::list<Armor> armors;
+    // 遍历每一个深度学习检测到的框 (BBox)
+    for (const auto& [cls_id, conf, box] : dl_results) {
+      // 获取该框对应的属性（颜色、类型等）
+      auto [expected_color, name, type] = armor_properties[cls_id];
+
+      // 筛选出在该 BBox 范围内的灯条
+      std::vector<Lightbar*> candidate_bars;
+      for (auto& lb : lightbars) {
+        if (box.contains(lb.center)) {
+          // 增加颜色约束：如果灯条颜色与模型预测颜色不符，排除
+          // 注意：如果你的get_color不够准，可以适当放宽这个条件
+          if (lb.color == expected_color) {
+            candidate_bars.push_back(&lb);
+          }
+        }
       }
-      float distance_br_tr =
-          cv::norm(br - (lightbar.bottom + cv::Point2f(boundingBox.x, boundingBox.y))) +
-          cv::norm(tr - (lightbar.top + cv::Point2f(boundingBox.x, boundingBox.y)));
-      if (distance_br_tr < min_distance_br_tr) {
-        min_distance_br_tr = distance_br_tr;
-        closest_right_lightbar = &lightbar;
+
+      // 只在同一个 BBox 内部的灯条之间进行两两匹配
+      if (candidate_bars.size() < 2)
+        continue;
+
+      for (size_t i = 0; i < candidate_bars.size(); ++i) {
+        for (size_t j = i + 1; j < candidate_bars.size(); ++j) {
+          auto& left = *candidate_bars[i];
+          auto& right = *candidate_bars[j];
+
+          // 创建临时装甲板进行几何校验
+          auto armor = Armor(cls_id, conf, box, left, right);
+          armor.color = expected_color;
+          armor.name = name;
+          armor.type = type;
+
+          // 核心：此时 check_geometry 可以根据 armor.type (大小装甲板)
+          // 使用不同的阈值（比例、角度等）进行精确过滤
+          if (check_geometry(armor)) {
+            armor.center_norm = get_center_norm(bgr_img, armor.center);
+            armors.emplace_back(armor);
+          }
+        }
       }
     }
 
-    // tools::logger()->debug(
-    // "min_distance_br_tr + min_distance_tl_bl is {}", min_distance_br_tr + min_distance_tl_bl);
-    // std::vector<cv::Point2f> points2f{
-    //   closest_left_lightbar->top, closest_left_lightbar->bottom, closest_right_lightbar->bottom,
-    //   closest_right_lightbar->top};
-    // tools::draw_points(armor_roi, points2f, {0, 0, 255}, 2);
-    // cv::imshow("armor_roi", armor_roi);
+    // 检查装甲板是否存在共用灯条的情况
+    for (auto armor1 = armors.begin(); armor1 != armors.end(); armor1++) {
+      for (auto armor2 = std::next(armor1); armor2 != armors.end();) {
+        if (armor1->left.id != armor2->left.id && armor1->left.id != armor2->right.id &&
+            armor1->right.id != armor2->left.id && armor1->right.id != armor2->right.id) {
+          armor2++;
+          continue;
+        }
 
-    if (closest_left_lightbar && closest_right_lightbar &&
-        min_distance_br_tr + min_distance_tl_bl < 15) {
-      // 将四个点从armor_roi坐标系转换到原始图像坐标系
-      armor.points[0] = closest_left_lightbar->top + cv::Point2f(boundingBox.x, boundingBox.y);
-      armor.points[1] = closest_right_lightbar->top + cv::Point2f(boundingBox.x, boundingBox.y);
-      armor.points[2] = closest_right_lightbar->bottom + cv::Point2f(boundingBox.x, boundingBox.y);
-      armor.points[3] = closest_left_lightbar->bottom + cv::Point2f(boundingBox.x, boundingBox.y);
-      return true;
+        // 装甲板重叠, 保留面积小的
+        if (armor1->left.id == armor2->left.id || armor1->right.id == armor2->right.id) {
+          auto area1 = cv::contourArea(armor1->points);
+          auto area2 = cv::contourArea(armor2->points);
+          if (area1 < area2) {
+            armor2 = armors.erase(armor2);
+          } else {
+            armor1 = armors.erase(armor1);
+            break;
+          }
+          continue;
+        }
+
+        // 装甲板相连，保留置信度大的
+        if (armor1->left.id == armor2->right.id || armor1->right.id == armor2->left.id) {
+          if (armor1->confidence < armor2->confidence) {
+            armor1 = armors.erase(armor1);
+            break;
+          } else {
+            armor2 = armors.erase(armor2);
+            continue;
+          }
+        }
+      }
     }
 
-    return false;
+    // 保存灯条供外部使用
+    last_lightbars.assign(lightbars.begin(), lightbars.end());
+
+    if (armor_debug_)
+      show_result(binary_img, bgr_img, lightbars, armors, frame_count);
+
+    return armors;
   }
 
   bool Detector::check_geometry(const Lightbar& lightbar) const
@@ -240,11 +390,37 @@ namespace xz_vision
 
   bool Detector::check_geometry(const Armor& armor) const
   {
-    auto ratio_ok = armor.ratio > min_armor_ratio_ && armor.ratio < max_armor_ratio_;
-    auto side_ratio_ok = armor.side_ratio < max_side_ratio_;
-    auto rectangular_error_ok = armor.rectangular_error < max_rectangular_error_;
-    return ratio_ok && side_ratio_ok && rectangular_error_ok;
+    // 1. 获取两灯条的高度比 (长/短)
+    double h_min = std::min(armor.left.length, armor.right.length);
+    double h_max = std::max(armor.left.length, armor.right.length);
+    double height_ratio = h_min / h_max;
+    if (height_ratio < 0.6)
+      return false; // 高度差太大，剔除
+
+    // 2. 获取长宽比 (两灯条中心间距 / 平均灯条高度)
+    double avg_h = (armor.left.length + armor.right.length) / 2.0;
+    double dist = cv::norm(armor.left.center - armor.right.center);
+    double aspect_ratio = dist / avg_h;
+
+    // 3. 根据装甲板类型判断比例是否合规
+    if (armor.type == ArmorType::big) {
+      // 大装甲板标准 (Hero)
+      if (aspect_ratio < 1.5 || aspect_ratio > 5.0)
+        return false;
+    } else {
+      // 小装甲板标准 (Infantry / Sentry / Outpost)
+      if (aspect_ratio < 1.5 || aspect_ratio > 3.0)
+        return false;
+    }
+
+    // 4. 灯条平行度（夹角误差）
+    double angle_diff = std::abs(armor.left.angle - armor.right.angle);
+    if (angle_diff > 8.0)
+      return false;
+
+    return true;
   }
+
   bool Detector::check_name(const Armor& armor) const
   {
     auto name_ok = armor.name != ArmorName::not_armor;
@@ -254,9 +430,9 @@ namespace xz_vision
     if (name_ok && !confidence_ok)
       save(armor);
 
-    // 出现 5号 则显示 debug 信息。但不过滤。
-    if (armor.name == ArmorName::five)
-      tools::logger()->debug("See pattern 5");
+    // // 出现 5号 则显示 debug 信息。但不过滤。
+    // if (armor.name == ArmorName::five)
+    //   tools::logger()->debug("See pattern 5");
 
     return name_ok && confidence_ok;
   }

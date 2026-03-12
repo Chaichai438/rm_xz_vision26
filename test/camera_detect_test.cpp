@@ -5,7 +5,6 @@
 
 #include "ecu/camera.hpp"
 #include "function/auto_aim/detector.hpp"
-#include "function/auto_aim/yolo.hpp"
 #include "tools/exiter.hpp"
 #include "tools/logger.hpp"
 #include "tools/rotary_tool.hpp"

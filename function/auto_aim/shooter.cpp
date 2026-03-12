@@ -21,6 +21,7 @@ namespace xz_vision
                       const std::list<xz_vision::Target>& targets,
                       const Eigen::Vector3d& gimbal_pos)
   {
+    // 如果没有控制权限、没有目标，或者关闭了自动开火，直接放弃射击
     if (!command.control || targets.empty() || !auto_fire_)
       return false;
 
@@ -33,6 +34,7 @@ namespace xz_vision
     // tools::logger()->debug("d(command.yaw) is {:.4f}", std::abs(last_command_.yaw -
     // command.yaw));
 
+    // 指令稳定性校验、闭环精度校验、目标有效性
     if (std::abs(last_command_.yaw - command.yaw) <
             tolerance * 2 &&                                       // 此时认为command突变不应该射击
         std::abs(gimbal_pos[0] - last_command_.yaw) < tolerance && // 应该减去上一次command的yaw值

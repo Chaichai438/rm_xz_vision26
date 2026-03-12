@@ -34,7 +34,9 @@ int main(int argc, char* argv[])
   }
   auto config_path = cli.get<std::string>(0);
 
-  ecu::Camera Camera(config_path);
+  // ecu::Camera Camera(config_path);
+  cv::VideoCapture cap("/home/chaichai/project/rm_xz_vision26/assets/armor.avi");
+
   xz_vision::Detector detector(config_path, true);
   xz_vision::Solver solver(config_path);
   tools::Plotter plotter;
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
     std::chrono::steady_clock::time_point timestamp;
 
     // 增加空帧检查，防止 cvtColor 报错
-    Camera.read(raw_img, timestamp);
+    cap >> raw_img;
     if (raw_img.empty()) {
       continue;
     }

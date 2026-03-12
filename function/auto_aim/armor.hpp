@@ -42,7 +42,6 @@ namespace xz_vision
         two,
         three,
         four,
-        five,
         sentry,
         outpost,
         base,
@@ -69,18 +68,30 @@ namespace xz_vision
         forth,
         fifth
     };
-
     
+    // 按照模型输出 ID 顺序排列：
+    // 0:B_1, 1:B_2, 2:B_3, 3:B_4, 4:B_Base, 5:B_Outpost, 6:B_Sentry, 7:Gray
+    // 8:R_1, 9:R_2, 10:R_3, 11:R_4, 12:R_Base, 13:R_Outpost, 14:R_Sentry
     const std::vector<std::tuple<Color, ArmorName, ArmorType>> armor_properties = {
-    {blue, sentry, small},     {red, sentry, small},     {gray, sentry, small},
-    {blue, one, small},        {red, one, small},        {gray, one, small},
-    {blue, two, small},        {red, two, small},        {gray, two, small},
-    {blue, three, small},      {red, three, small},      {gray, three, small},
-    {blue, four, small},       {red, four, small},       {gray, four, small},
-    {blue, outpost, small},    {red, outpost, small},    {gray, outpost, small},
-    {blue, base, big},         {red, base, big},         {gray, base, big},      {purple, base, big},       
-    {blue, base, small},       {red, base, small},       {gray, base, small},    {purple, base, small},    
+        {blue, one, big},      // 0: B_1
+        {blue, two, small},      // 1: B_2
+        {blue, three, small},    // 2: B_3
+        {blue, four, small},     // 3: B_4
+        {blue, base, small},       // 4: B_Base
+        {blue, outpost, small},  // 5: B_Outpost
+        {blue, sentry, small},   // 6: B_Sentry
+
+        {gray, not_armor, small},// 7: Gray (通常是无效目标或中立)
+
+        {red, one, big},       // 8: R_1
+        {red, two, small},       // 9: R_2
+        {red, three, small},     // 10: R_3
+        {red, four, small},      // 11: R_4
+        {red, base, small},        // 12: R_Base
+        {red, outpost, small},   // 13: R_Outpost
+        {red, sentry, small}     // 14: R_Sentry
     };
+
   // clang-format on
 
   // 灯条
@@ -134,17 +145,31 @@ namespace xz_vision
     Armor(int color_id, int num_id, float confidence, const cv::Rect& box,
           std::vector<cv::Point2f> armor_keypoints, cv::Point2f offset);
 
+    // 神经网络构造函数
+    Armor(int class_id, float confidence, const cv::Rect& box, const Lightbar& left,
+          const Lightbar& right);
+
     Eigen::Vector3d xyz_in_camera; // 在相机坐标系下的位置
     Eigen::Vector3d xyz_in_gimbal; // 在云台坐标系下的位置
     Eigen::Vector3d xyz_in_world;  // 在世界坐标系下的位置
 
     // 姿态信息（单位：弧度）
-    Eigen::Vector3d ypr_in_gimbal; // 在云台坐标系下的偏航(yaw)、俯仰(pitch)、滚转(roll),装甲板平面相对于云台指向的偏角。例如，如果
-                                   // yaw 为 0，说明装甲板正对着你的枪口。
-    Eigen::Vector3d ypr_in_world;  // 在世界坐标系下的欧拉角,装甲板相对于整个赛场的偏角。
-    Eigen::Vector3d ypd_in_world;  // 在世界坐标系下的偏航(yaw)、俯仰(pitch)、距离(distance)
+    Eigen::Vector3d
+        ypr_in_gimbal; // 在云台坐标系下的偏航(yaw)、俯仰(pitch)、滚转(roll),装甲板平面相对于云台指向的偏角。例如，如果
+                       // yaw 为 0，说明装甲板正对着你的枪口。
+    Eigen::Vector3d ypr_in_world; // 在世界坐标系下的欧拉角,装甲板相对于整个赛场的偏角。
+    Eigen::Vector3d ypd_in_world; // 在世界坐标系下的偏航(yaw)、俯仰(pitch)、距离(distance)
 
-    // 用于优化的原始数据
-    double yaw_raw = 0.0;
+    double yaw_raw;
+
+    std::string get_id_name() const
+    {
+      static const std::vector<std::string> id_strs = {
+          "B1", "B2", "B3", "B4", "BBase", "BOutpost", "BSentry", "Gray",
+          "R1", "R2", "R3", "R4", "RBase", "ROutpost", "RSentry"};
+      if (class_id >= 0 && class_id < (int)id_strs.size())
+        return id_strs[class_id];
+      return "None";
+    }
   };
 } // namespace xz_vision

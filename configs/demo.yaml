@@ -1,4 +1,4 @@
-#敌方装甲板
+# 敌方装甲板
 enemy_color: blue
 
 #####--------Trad_cv参数--------#####
@@ -12,7 +12,8 @@ min_armor_ratio: 0.9
 max_armor_ratio: 6
 max_side_ratio: 1.5
 max_rectangular_error: 25
-min_confidence: 0.8
+min_confidence: 0.8 #神经网络也用了这部分需要分割开
+
 # 分类器参数
 classify_model: /home/chaichai/project/rm_xz_vision26/assets/tiny_resnet.onnx
 
@@ -36,7 +37,7 @@ t_camera2gimbal: [0.045517325957791413, 0.10544338092767802, 0.03464971088018579
 
 #####--------串口--------#####
 com_port: "/dev/ttyUSB0"
-baudrate: 1152000
+baudrate: 115200
 
 #####--------相机曝光--------#####
 camera_name: "hikrobot"
@@ -55,6 +56,12 @@ leaving_angle: 20 # degree
 decision_speed: 8 # rad/s
 high_speed_delay_time: 0.030 # s
 low_speed_delay_time: 0.015 # s
+
+#####-----shooter参数-----#####
+first_tolerance: 3             # 近距离射击容差，degree
+second_tolerance: 2            # 远距离射击容差，degree
+judge_distance: 2              # 距离判断阈值
+auto_fire: true                # 是否由自瞄控制射击
 
 #####-----神经网络参数-----#####
 yolo_name: yolov8

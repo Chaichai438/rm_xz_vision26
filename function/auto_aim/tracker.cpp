@@ -18,6 +18,7 @@ namespace xz_vision
       , last_timestamp_(std::chrono::steady_clock::now())
   {
     auto yaml = YAML::LoadFile(config_path);
+
     enemy_color_ = (yaml["enemy_color"].as<std::string>() == "red") ? Color::red : Color::blue;
     min_detect_count_ = yaml["min_detect_count"].as<int>();
     max_temp_lost_count_ = yaml["max_temp_lost_count"].as<int>();
@@ -25,8 +26,10 @@ namespace xz_vision
     normal_temp_lost_count_ = max_temp_lost_count_;
   }
 
+  // 返回跟踪状态
   std::string Tracker::state() const { return state_; }
 
+  // 跟踪主函数，返回目标
   std::list<Target> Tracker::track(std::list<Armor>& armors,
                                    std::chrono::steady_clock::time_point t, bool use_enemy_color)
   {
@@ -148,6 +151,7 @@ namespace xz_vision
     }
   }
 
+  // 为不同类型的装甲板设置基础参数
   bool Tracker::set_target(std::list<Armor>& armors, std::chrono::steady_clock::time_point t)
   {
     if (armors.empty())
@@ -157,11 +161,20 @@ namespace xz_vision
     solver_.solve(armor);
 
     // 根据兵种优化初始化参数
-    auto is_balance = (armor.type == ArmorType::big) &&
-                      (armor.name == ArmorName::three || armor.name == ArmorName::four ||
-                       armor.name == ArmorName::five);
+    auto is_balance = (armor.type == ArmorType::small) &&
+                      (armor.name == ArmorName::three || armor.name == ArmorName::four);
 
     if (is_balance) {
+      // clang-format off
+      /* 初始协方差矩阵（11维度）
+         索引：0,2,4   x,y,z (位置)         初始位置相对确定（由 PnP 视觉解算得到）
+         索引：1,3,5   vx​,vy​,vz​ (速度)      不确定初始速度。因为第一帧无法知晓速度，给大值让滤波器快点收敛。 
+         索引: 6      θ (目标旋转角度)       对目标当前转到哪个角度的初步估计。 
+         索引: 7      ω (角速度)            极不确定。目标转得多快？一开始完全不知道，所以给最高值。 
+         索引: 8      r (旋转半径)           目标装甲板到中心的距离。 
+         索引: 9, 10  其他/加速度            系统的辅助修正项。
+      */
+      // clang-format on
       Eigen::VectorXd P0_dig{{1, 64, 1, 64, 1, 64, 0.4, 100, 1, 1, 1}};
       target_ = Target(armor, t, 0.2, 2, P0_dig);
     }
@@ -184,6 +197,7 @@ namespace xz_vision
     return true;
   }
 
+  // 在已知上一次目标的情况下，从当前帧识别到的一堆装甲板中，找到最匹配的那一个，并更新滤波器状态
   bool Tracker::update_target(std::list<Armor>& armors, std::chrono::steady_clock::time_point t)
   {
     target_.predict(t);

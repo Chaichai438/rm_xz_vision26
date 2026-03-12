@@ -7,6 +7,16 @@
 #include <iomanip>
 #include <opencv2/opencv.hpp>
 
+// 统计频率的辅助函数
+double get_fps()
+{
+  static auto last_t = std::chrono::steady_clock::now();
+  auto now = std::chrono::steady_clock::now();
+  double dt = std::chrono::duration<double>(now - last_t).count();
+  last_t = now;
+  return 1.0 / dt;
+}
+
 const std::string keys = "{help h usage ? |     | 输出命令行参数说明 }"
                          "{@config-path c |     | yaml配置文件的路径}";
 
@@ -23,37 +33,45 @@ int main(int argc, char* argv[])
     config_path = argv[1];
 
   ecu::Gimbal gimbal(config_path);
+  tools::Plotter plotter;
+  nlohmann::json data;
 
-  std::cout << "--- Gimbal Communication Test Start ---" << std::endl;
+  std::cout << "\n--- Gimbal Communication Latency Test ---" << std::endl;
+  std::cout << "Target Frequency: 100Hz | Reading mode: Real-time Update" << std::endl;
 
-  // 2. 构造模拟的视觉目标数据
-  ecu::VisionToGimbal test_data;
-  test_data.mode = 1;       // 进入自瞄模式 (对应发送 0xFC)
-  test_data.pitch = 12.34f; // 模拟 Pitch 目标角度
-  test_data.yaw = -45.67f;  // 模拟 Yaw 目标角度
+  auto start_time = std::chrono::steady_clock::now();
 
-  int count = 0;
+  ecu::VisionToGimbal vtg;
+  vtg.pitch = 0.0f;
+  vtg.yaw = 0.1f;
+
   while (true) {
-    //  发送数据给 STM32 (频率约 100Hz)
-    gimbal.send(test_data);
-
+    gimbal.send(vtg);
     auto state = gimbal.state();
     auto mode = gimbal.mode();
 
-    std::cout << "\r[Count: " << std::setw(5) << count++ << "] "
-              << "Mode: " << gimbal.str(mode) << " | "
-              << "MCU_Pitch: " << std::fixed << std::setprecision(2) << std::setw(7) << state.pitch
-              << " | "
-              << "MCU_Yaw: " << std::fixed << std::setprecision(2) << std::setw(7) << state.yaw
-              << " | "
-              << "BulletSpeed: " << state.bullet_speed << " m/s" << std::flush;
+    // 统计实际循环频率 (如果这个值远低于 100，说明 plotter 或 cout 太慢)
+    double current_fps = get_fps();
 
-    test_data.yaw += 0.01f;
-    if (test_data.yaw > 180.0f)
-      test_data.yaw = -180.0f;
+    data["yaw_gimbal"] = state.yaw;
+    data["pitch_gimbal"] = state.pitch;
+    data["mode"] = static_cast<int>(mode);
+    plotter.plot(data);
 
-    // 延时 10ms (100Hz)
+    static float last_yaw = 0;
+    std::string status = (std::abs(state.yaw - last_yaw) < 0.0001f) ? " [STALE]" : " [LIVE]";
+    last_yaw = state.yaw;
+
+    std::cout << "\r"
+              << "Hz: " << std::setw(3) << static_cast<int>(current_fps) << " | P: " << std::fixed
+              << std::setprecision(2) << std::setw(6) << state.pitch << " | Y: " << std::fixed
+              << std::setprecision(2) << std::setw(6) << state.yaw
+              << " | Speed: " << state.bullet_speed << status << "    " << std::flush;
+
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    if (cv::waitKey(1) == 27)
+      break; // 按 ESC 退出
   }
 
   return 0;

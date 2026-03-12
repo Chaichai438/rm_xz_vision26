@@ -24,6 +24,7 @@ find_library(LIBUSB_LIB
 set(LIBUSB_LIBRARIES ${LIBUSB_LIB})
 set(MVCAMERA_CONTROL_LIBRARIES ${MVCAMERA_CONTROL_LIB})
 
+find_package(OpenVINO REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -50,18 +51,26 @@ add_executable(auto_buff_test test/auto_buff_test.cpp)
 add_executable(auto_buff_main test/auto_buff_main.cpp)
 add_executable(trad_cv_test test/trad_cv_test.cpp)
 add_executable(camera_detect_test test/camera_detect_test.cpp)
-
 add_executable(auto_aim_test test/auto_aim_test.cpp)
-add_executable(gimbal_response_test test/gimbal_response_test.cpp)
+
+# add_executable(gimbal_response_test test/gimbal_response_test.cpp)
 add_executable(plotjuggler_test test/plotjuggler_test.cpp)
 add_executable(gimbal_test test/gimbal_test.cpp)
+add_executable(onnx_test test/onnx_test.cpp)
 
+# ================= src =================
+add_executable(auto_aim_debug src/auto_aim_debug.cpp)
+
+# ================= link =================
 # add_executable(exit_test test/exit_test.cpp)
 target_link_libraries(auto_buff_test ${OpenCV_LIBS} auto_buff ecu yaml-cpp tools fmt::fmt)
 target_link_libraries(auto_buff_main ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
-target_link_libraries(gimbal_response_test ${OpenCV_LIBS} ecu yaml-cpp tools fmt::fmt)
+
+# target_link_libraries(gimbal_response_test ${OpenCV_LIBS} ecu yaml-cpp tools fmt::fmt)
 target_link_libraries(plotjuggler_test ${OpenCV_LIBS} yaml-cpp tools fmt::fmt)
 target_link_libraries(gimbal_test ${OpenCV_LIBS} ecu yaml-cpp tools fmt::fmt serial)
+
+target_link_libraries(auto_aim_debug ${OpenCV_LIBS} auto_aim ecu yaml-cpp tools fmt::fmt)
 
 target_link_libraries(camera_detect_test PRIVATE
     ${OpenCV_LIBS}
@@ -78,6 +87,20 @@ target_link_libraries(camera_detect_test PRIVATE
 )
 
 target_link_libraries(auto_aim_test PRIVATE
+    ${OpenCV_LIBS}
+    auto_aim
+    tools
+    ecu
+    yaml-cpp
+    fmt::fmt
+    spdlog::spdlog
+    openvino::runtime
+    ${CERES_LIBRARIES}
+    ${MVCAMERA_CONTROL_LIB}
+    ${LIBUSB_LIB}
+)
+
+target_link_libraries(onnx_test PRIVATE
     ${OpenCV_LIBS}
     auto_aim
     tools
@@ -130,3 +153,15 @@ target_link_libraries(trad_cv_test PRIVATE
 # ${MVCAMERA_CONTROL_LIB} # 添加海康相机库
 # ${LIBUSB_LIB} # 添加libusb库
 # )
+add_executable(test_vision test/test_vision.cpp)
+
+target_link_libraries(test_vision
+    ${OpenCV_LIBS}
+    tools
+    ecu
+    auto_aim
+    yaml-cpp
+    fmt::fmt
+    openvino::runtime
+    ${CERES_LIBRARIES}
+)

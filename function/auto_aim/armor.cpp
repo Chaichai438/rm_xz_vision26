@@ -266,4 +266,45 @@ namespace xz_vision
     type = num_id == 1 ? ArmorType::big : ArmorType::small;
   }
 
+  // 神经网络构造函数
+  Armor::Armor(int id, float confidence, const cv::Rect& box, const Lightbar& left,
+               const Lightbar& right)
+      : class_id(id)
+      , confidence(confidence)
+      , box(box)
+      , left(left)
+      , right(right)
+  {
+    color = left.color;
+    center = (left.center + right.center) / 2;
+
+    points.emplace_back(left.top);
+    points.emplace_back(right.top);
+    points.emplace_back(right.bottom);
+    points.emplace_back(left.bottom);
+
+    auto left2right = right.center - left.center;
+    auto width_val = cv::norm(left2right);
+
+    double avg_length = (left.length + right.length) * 0.5;
+    ratio = width_val / avg_length;
+
+    double max_lightbar_length = std::max(left.length, right.length);
+    double min_lightbar_length = std::min(left.length, right.length);
+    side_ratio = max_lightbar_length / min_lightbar_length;
+
+    rectangular_error = ComputeRectangularError(left, right);
+
+    if (id >= 0 && id < armor_properties.size()) {
+      auto [color, name, type] = armor_properties[id];
+      this->color = color;
+      this->name = name;
+      this->type = type;
+    } else {
+      this->color = blue;
+      this->name = not_armor;
+      this->type = small;
+    }
+  }
+
 } // namespace xz_vision

@@ -12,7 +12,6 @@ add_subdirectory(serial)
 # 使用STATIC或SHARED库，而不是OBJECT库
 add_library(ecu STATIC
     camera.cpp
-    serial_port.cpp
     hikrobot/hikrobot.cpp
     gimbal/gimbal.cpp
     daheng/daheng.cpp
@@ -35,7 +34,13 @@ target_include_directories(ecu PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/serial/include
 )
 
-target_link_directories(ecu PUBLIC serial yaml-cpp)
+target_link_libraries(ecu PUBLIC
+    serial
+    yaml-cpp
+    MvCameraControl # 链接海康 SDK 核心库
+    usb-1.0 # 链接系统 libusb 库 (解决 libusb_init 等错误)
+    pthread # 线程库支持
+)
 
 # 1. 设置头文件路径
 target_include_directories(ecu PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/daheng/include)

@@ -1,0 +1,52 @@
+# # 敌方装甲板
+# enemy_color: "blue"
+
+#####--------Trad_cv参数--------#####
+threshold: 120
+max_angle_error: 75
+min_lightbar_ratio: 1.0
+max_lightbar_ratio: 15
+min_lightbar_length: 6
+min_armor_ratio: 0.9
+max_armor_ratio: 6
+max_side_ratio: 1.5
+max_rectangular_error: 25
+min_confidence: 0.8
+
+# 神经网络
+model_path: "/home/chaichai/project/rm_xz_vision26/assets/best.xml"
+device: "CPU"
+
+# 分类器参数(需要修改)
+classify_model: "/home/chaichai/project/rm_xz_vision26/assets/tiny_resnet.onnx"
+
+# #####--------Tracker参数--------#####
+# min_detect_count: 5
+# max_temp_lost_count: 15
+# outpost_max_temp_lost_count: 75
+
+#####--------Solver参数--------#####
+# 相机参数
+# 重投影误差:
+camera_matrix: [1782.6018364132117, 0., 720.81672883739145, 0,
+       1781.0137558521124, 559.58409339915659, 0, 0, 1. ]
+distort_coeffs: [ -0.21339334807190963, 0.12915546818819987,
+       -0.00076034446679492447, 0.0010834797368616798, 0.]
+
+# 相机同理想情况的偏角: yaw-1.61 pitch-0.82 roll-0.61 degree
+R_gimbal2imubody: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+R_camera2gimbal: [0.02823004230930648, -0.014076983590428133, 0.99950232778328707, -0.99954530259354468, -0.010995644138609872, 0.028076393521179785, 0.010594940981141165, -0.99984045444409364, -0.014380990321749998]
+t_camera2gimbal: [0.045517325957791413, 0.10544338092767802, 0.034649710880185793]
+
+#####--------串口--------#####
+com_port: "/dev/ttyACM0"
+baudrate: 921600
+
+#####--------相机曝光--------#####
+camera_name: "hikrobot"
+exposure_ms: 20
+# hikrobot参数
+gain: 10
+# daheng参数
+# gamma: 10
+vid_pid: "2bdf:0001"

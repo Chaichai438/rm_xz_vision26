@@ -9,4 +9,5 @@ add_library(tools OBJECT
     rotary_tool.cpp
     extended_kalman_filter.cpp
     trajectory.cpp
+    crc.cpp
 )

@@ -1,7 +1,7 @@
-#ifndef XZ_VISION__SOLVER_HPP  
+#ifndef XZ_VISION__SOLVER_HPP
 #define XZ_VISION__SOLVER_HPP
 
-#include <Eigen/Dense> 
+#include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <opencv2/core/eigen.hpp>
 
@@ -9,37 +9,36 @@
 
 namespace xz_vision
 {
-class Solver
-{
-public:
-  explicit Solver(const std::string & config_path);
+  class Solver
+  {
+  public:
+    explicit Solver(const std::string& config_path);
 
-  Eigen::Matrix3d R_gimbal2world() const;
+    Eigen::Matrix3d R_gimbal2world() const;
 
-  void set_R_gimbal2world(const Eigen::Quaterniond & q);
+    void set_R_gimbal2world(const Eigen::Quaterniond& q);
 
-  void solve(Armor & armor) const;
+    void solve(Armor& armor) const;
 
-  std::vector<cv::Point2f> reproject_armor(const Eigen::Vector3d & xyz_in_world, double yaw, ArmorType type, ArmorName name) const;
+    std::vector<cv::Point2f> reproject_armor(const Eigen::Vector3d& xyz_in_world, double yaw,
+                                             ArmorType type, ArmorName name) const;
 
-  double oupost_reprojection_error(Armor armor, const double & picth);
+    double oupost_reprojection_error(Armor armor, const double& picth);
 
-  std::vector<cv::Point2f> world2pixel(const std::vector<cv::Point3f> & worldPoints);
+    std::vector<cv::Point2f> world2pixel(const std::vector<cv::Point3f>& worldPoints);
 
-private:
-  cv::Mat camera_matrix_;
-  cv::Mat distort_coeffs_;
-  Eigen::Matrix3d R_gimbal2imubody_;
-  Eigen::Matrix3d R_camera2gimbal_;
-  Eigen::Vector3d t_camera2gimbal_;
-  Eigen::Matrix3d R_gimbal2world_;
+  private:
+    cv::Mat camera_matrix_;
+    cv::Mat distort_coeffs_;
+    Eigen::Matrix3d R_gimbal2imubody_;
+    Eigen::Matrix3d R_camera2gimbal_;
+    Eigen::Vector3d t_camera2gimbal_;
+    Eigen::Matrix3d R_gimbal2world_;
 
-  void optimize_yaw(Armor & armor) const;
- double armor_reprojection_error(const Armor & armor, double yaw, const double & inclined) const;
+    void optimize_yaw(Armor& armor) const;
+    double armor_reprojection_error(const Armor& armor, double yaw, const double& inclined) const;
+  };
 
+} // namespace xz_vision
 
-};
-
-} 
-
-#endif  
+#endif

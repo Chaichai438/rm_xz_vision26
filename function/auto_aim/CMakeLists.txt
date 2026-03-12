@@ -7,11 +7,10 @@ add_library(auto_aim STATIC
     armor.cpp
     classifier.cpp
     solver.cpp
-    yolo.cpp
-    yolos/yolov8.cpp
     target.cpp
     tracker.cpp
     aimer.cpp
+    shooter.cpp
 )
 
 target_include_directories(auto_aim PRIVATE

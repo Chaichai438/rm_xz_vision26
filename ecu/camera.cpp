@@ -21,7 +21,7 @@ namespace ecu
       camera_ = std::make_unique<ecu::Daheng>(exposure_ms, gamma, vid_pid);
     }
 
-    if (camera_name == "hikrobot") {
+    else if (camera_name == "hikrobot") {
       auto gain = tools::read<double>(yaml, "gain");
       auto vid_pid = tools::read<std::string>(yaml, "vid_pid");
       camera_ = std::make_unique<ecu::HikRobot>(exposure_ms, gain, vid_pid);

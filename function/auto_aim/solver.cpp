@@ -26,6 +26,7 @@ const std::vector<cv::Point3f> SMALL_ARMOR_POINTS{
   {0, -SMALL_ARMOR_WIDTH / 2, -LIGHTBAR_LENGTH / 2},
   {0, SMALL_ARMOR_WIDTH / 2, -LIGHTBAR_LENGTH / 2}};
   // clang-format on
+
   Solver::Solver(const std::string& config_path)
       : R_gimbal2world_(Eigen::Matrix3d::Identity())
   {
@@ -81,8 +82,7 @@ const std::vector<cv::Point3f> SMALL_ARMOR_POINTS{
     armor.ypd_in_world = tools::xyz2ypd(armor.xyz_in_world);
 
     auto is_balance = (armor.type == ArmorType::big) &&
-                      (armor.name == ArmorName::three || armor.name == ArmorName::four ||
-                       armor.name == ArmorName::five);
+                      (armor.name == ArmorName::three || armor.name == ArmorName::four);
     if (is_balance)
       return;
 
