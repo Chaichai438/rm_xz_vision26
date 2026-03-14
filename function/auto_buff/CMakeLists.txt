@@ -1,13 +1,20 @@
-cmake_minimum_required(VERSION 3.16)
-set(OpenVINO_DIR "/home/c/opt/intel/openvino_ubuntu22_2025/runtime/cmake")
+cmake_minimum_required(VERSION 3.15)
 
-find_package(OpenVINO REQUIRED)
-find_package(Ceres REQUIRED)
+project(VisCore
+        VERSION 0.1.0)
 
-add_library(auto_buff OBJECT
-    rune_detector.cpp
-    rune_solver.cpp
-    power_rune.cpp
-)
+# cmake 函数/宏
+include(cmake/VisCoreModule.cmake)
 
-target_link_libraries(auto_buff openvino::runtime ${CERES_LIBRARIES} yaml-cpp)
+# cmake 编译选项
+include(cmake/VisCoreCompilerOptions.cmake)
+
+
+# VisCore 通用基础模块
+add_subdirectory(common)
+
+# VisCore 具体实现模块
+add_subdirectory(modules)
+
+# VisCore 测试模块
+add_subdirectory(examples)

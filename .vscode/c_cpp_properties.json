@@ -5,7 +5,18 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/opencv4",
-                "/usr/include/eigen3"
+                "/usr/include/eigen3",
+                "${workspaceFolder}/function/auto_buff/examples/rune_detect_demo/include",
+                "${workspaceFolder}/function/auto_buff/modules/feature/rune_target/include",
+                "${workspaceFolder}/function/auto_buff/common/contour_proc/include",
+                "${workspaceFolder}/function/auto_buff/common/math/include",
+                "${workspaceFolder}/function/auto_buff/common/modules/feature/include",
+                "${workspaceFolder}/function/auto_buff/common/dataio/include",
+                "${workspaceFolder}/function/auto_buff/modules/feature/rune_fan/include",
+                "${workspaceFolder}/function/auto_buff/modules/feature/rune_group/include",
+                "${workspaceFolder}/function/auto_buff/modules/feature/rune_center/include",
+                "${workspaceFolder}/function/auto_buff/modules/detector/rune_detector/include",
+                "${workspaceFolder}/function/auto_buff/common/modules/detector/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

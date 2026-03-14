@@ -46,6 +46,15 @@ add_subdirectory(function/auto_buff)
 add_subdirectory(function/auto_aim)
 add_subdirectory(tools)
 
+# Add auto_buff library
+add_library(auto_buff OBJECT
+    function/auto_buff/rune_detector.cpp
+    function/auto_buff/rune_solver.cpp
+    function/auto_buff/power_rune.cpp
+)
+
+target_link_libraries(auto_buff openvino::runtime ${CERES_LIBRARIES} yaml-cpp)
+
 # ================= test =================
 add_executable(auto_buff_test test/auto_buff_test.cpp)
 add_executable(auto_buff_main test/auto_buff_main.cpp)
@@ -61,8 +70,6 @@ add_executable(onnx_test test/onnx_test.cpp)
 # ================= src =================
 add_executable(auto_aim_debug src/auto_aim_debug.cpp)
 
-# ================= link =================
-# add_executable(exit_test test/exit_test.cpp)
 target_link_libraries(auto_buff_test ${OpenCV_LIBS} auto_buff ecu yaml-cpp tools fmt::fmt)
 target_link_libraries(auto_buff_main ${OpenCV_LIBS} auto_buff yaml-cpp tools fmt::fmt)
 

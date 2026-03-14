@@ -22,6 +22,11 @@ target_include_directories(auto_aim PRIVATE
 
 target_link_libraries(auto_aim PRIVATE
     openvino::runtime
+    tbb
+    xml2
+    z
+    m
+    dl
 )
 
 # 可选：如果需要 OpenCV，添加
