@@ -10,7 +10,7 @@
 #include <iostream>
 #include <chrono>
 #include <iomanip>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 
 using namespace xz_vision;
 

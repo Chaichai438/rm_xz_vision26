@@ -11,7 +11,7 @@ namespace xz_vision
     net_ = cv::dnn::readNetFromONNX(model);
     auto ovmodel = core_.read_model(model);
     compiled_model_ = core_.compile_model(
-        ovmodel, "AUTO", ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
+        ovmodel, "AUTO", ov::AnyMap{{ov::hint::performance_mode.name(), ov::hint::PerformanceMode::LATENCY}});
   }
 
   void Classifier::classify(Armor& armor)
