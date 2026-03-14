@@ -33,6 +33,7 @@ namespace xz_vision
   std::list<Target> Tracker::track(std::list<Armor>& armors,
                                    std::chrono::steady_clock::time_point t, bool use_enemy_color)
   {
+    // tools::logger()->debug("Rracker Programing1...");
     auto dt = tools::delta_time(t, last_timestamp_);
     last_timestamp_ = t;
 
@@ -63,9 +64,14 @@ namespace xz_vision
     // 按优先级排序，优先级最高在首位(优先级越高数字越小，1的优先级最高)
     armors.sort([](const Armor& a, const Armor& b) { return a.priority < b.priority; });
 
+    // tools::logger()->debug("[tracker] Programing2...");
+
     bool found;
+    // tools::logger()->debug("[tracker] Programing3...");
     if (state_ == "lost") {
+      // tools::logger()->debug("[tracker] Programing4s...");
       found = set_target(armors, t);
+
     } else {
       // 如果主相机画面中出现了优先级更高的装甲板，切换目标
       if (!armors.empty() && armors.front().priority < target_.priority) {
@@ -75,7 +81,7 @@ namespace xz_vision
         found = update_target(armors, t);
       }
     }
-
+    // tools::logger()->debug("[tracker] Programing5s...");
     pre_state_ = state_;
     state_machine(found);
 
@@ -176,7 +182,7 @@ namespace xz_vision
       */
       // clang-format on
       Eigen::VectorXd P0_dig{{1, 64, 1, 64, 1, 64, 0.4, 100, 1, 1, 1}};
-      target_ = Target(armor, t, 0.2, 2, P0_dig);
+      target_ = Target(armor, t, 0.2, 4, P0_dig);
     }
 
     else if (armor.name == ArmorName::outpost) {

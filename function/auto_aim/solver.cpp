@@ -81,7 +81,7 @@ const std::vector<cv::Point3f> SMALL_ARMOR_POINTS{
 
     armor.ypd_in_world = tools::xyz2ypd(armor.xyz_in_world);
 
-    auto is_balance = (armor.type == ArmorType::big) &&
+    auto is_balance = (armor.type == ArmorType::small) &&
                       (armor.name == ArmorName::three || armor.name == ArmorName::four);
     if (is_balance)
       return;
@@ -219,7 +219,7 @@ const std::vector<cv::Point3f> SMALL_ARMOR_POINTS{
     auto min_error = 1e10;
     auto best_yaw = armor.ypr_in_world[0];
 
-    for (int i = 0; i < SEARCH_RANGE; i++) {
+    for (int i = 0; i < SEARCH_RANGE; i += 5) {
       double yaw = tools::limit_rad(yaw0 + i * CV_PI / 180.0);
       auto error = armor_reprojection_error(armor, yaw, (i - SEARCH_RANGE / 2) * CV_PI / 180.0);
 

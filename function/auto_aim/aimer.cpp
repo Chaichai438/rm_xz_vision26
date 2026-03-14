@@ -39,11 +39,12 @@ namespace xz_vision
   {
     if (targets.empty()) {
       //----------------------
-      tools::logger()->debug("未找到有效目标");
+      tools::logger()->debug("[Aimer] 未找到有效目标");
 
       return {false, false, 0, 0};
     }
 
+    tools::logger()->debug("[Aimer] 找到有效目标");
     auto target = targets.front();
     auto ekf = target.ekf();
     // 根据目标速度选择延迟时间

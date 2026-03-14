@@ -1,17 +1,17 @@
 # # 敌方装甲板
-# enemy_color: "blue"
+enemy_color: "blue"
 
 #####--------Trad_cv参数--------#####
-threshold: 120
+threshold: 110
 max_angle_error: 75
-min_lightbar_ratio: 1.0
+min_lightbar_ratio: 0.4
 max_lightbar_ratio: 15
-min_lightbar_length: 6
+min_lightbar_length: 4
 min_armor_ratio: 0.9
 max_armor_ratio: 6
 max_side_ratio: 1.5
 max_rectangular_error: 25
-min_confidence: 0.8
+min_confidence: 0.6
 
 # 神经网络
 model_path: "/home/chaichai/project/rm_xz_vision26/assets/best.xml"
@@ -20,18 +20,33 @@ device: "CPU"
 # 分类器参数(需要修改)
 classify_model: "/home/chaichai/project/rm_xz_vision26/assets/tiny_resnet.onnx"
 
-# #####--------Tracker参数--------#####
-# min_detect_count: 5
-# max_temp_lost_count: 15
-# outpost_max_temp_lost_count: 75
+#####--------Tracker参数--------#####
+min_detect_count: 5
+max_temp_lost_count: 15
+outpost_max_temp_lost_count: 75
 
 #####--------Solver参数--------#####
 # 相机参数
-# 重投影误差:
+# 重投影误差 : 0.0965px
 camera_matrix: [1782.6018364132117, 0., 720.81672883739145, 0,
        1781.0137558521124, 559.58409339915659, 0, 0, 1. ]
 distort_coeffs: [ -0.21339334807190963, 0.12915546818819987,
        -0.00076034446679492447, 0.0010834797368616798, 0.]
+
+#####--------Aimer参数--------#####
+yaw_offset: -1 # degree -2.5
+pitch_offset: -1.4 # degree 2
+comming_angle: 60 # degree
+leaving_angle: 20 # degree
+decision_speed: 8 # rad/s
+high_speed_delay_time: 0.030 # s
+low_speed_delay_time: 0.015 # s
+
+#####-----shooter参数-----#####
+first_tolerance: 3             # 近距离射击容差，degree
+second_tolerance: 2            # 远距离射击容差，degree
+judge_distance: 2              # 距离判断阈值
+auto_fire: true                # 是否由自瞄控制射击
 
 # 相机同理想情况的偏角: yaw-1.61 pitch-0.82 roll-0.61 degree
 R_gimbal2imubody: [1, 0, 0, 0, 1, 0, 0, 0, 1]

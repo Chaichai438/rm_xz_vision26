@@ -221,7 +221,7 @@ namespace xz_vision
             auto [color, name, type] = armor_properties[cls_id];
             armor.color = color;
             armor.name = name;
-            armor.type = type;
+            armor.type = get_type(armor);
           }
           matched = true;
           break;
@@ -248,6 +248,7 @@ namespace xz_vision
     // 进行二值化
     cv::Mat binary_img;
     cv::threshold(gray_img, binary_img, threshold_, 255, cv::THRESH_BINARY);
+    // cv::imshow("binary", binary_img);
 
     // 获取轮廓点
     std::vector<std::vector<cv::Point>> contours;
@@ -285,7 +286,7 @@ namespace xz_vision
     //     if (!check_geometry(armor))
     //       continue;
 
-    //     // if (!check_type(armor))
+    //     // if (!check2_type(armor))
     //     //   continue;
 
     //     armor.center_norm = get_center_norm(bgr_img, armor.center);
@@ -328,10 +329,11 @@ namespace xz_vision
 
           // 核心：此时 check_geometry 可以根据 armor.type (大小装甲板)
           // 使用不同的阈值（比例、角度等）进行精确过滤
-          if (check_geometry(armor)) {
-            armor.center_norm = get_center_norm(bgr_img, armor.center);
-            armors.emplace_back(armor);
-          }
+          if (!check_geometry(armor))
+            continue;
+
+          armor.center_norm = get_center_norm(bgr_img, armor.center);
+          armors.emplace_back(armor);
         }
       }
     }
@@ -491,23 +493,21 @@ namespace xz_vision
     /// TODO: 25赛季是否还需要根据比例判断大小装甲？能否根据图案直接判断？
 
     if (armor.ratio > 3.0) {
-      // tools::logger()->debug(
-      //   "[Detector] get armor type by ratio: BIG {} {:.2f}", ARMOR_NAMES[armor.name],
-      //   armor.ratio);
+      tools::logger()->debug("[Detector] get armor type by ratio: BIG {} {:.2f}",
+                             ARMOR_NAME[armor.name], armor.ratio);
       return ArmorType::big;
     }
 
     if (armor.ratio < 2.5) {
-      // tools::logger()->debug(
-      //   "[Detector] get armor type by ratio: SMALL {} {:.2f}", ARMOR_NAMES[armor.name],
-      //   armor.ratio);
+      tools::logger()->debug("[Detector] get armor type by ratio: SMALL {} {:.2f}",
+                             ARMOR_NAME[armor.name], armor.ratio);
       return ArmorType::small;
     }
 
     // tools::logger()->debug("[Detector] get armor type by name: {}", ARMOR_NAMES[armor.name]);
 
     // 英雄、基地只能是大装甲板
-    if (armor.name == ArmorName::one || armor.name == ArmorName::base) {
+    if (armor.name == ArmorName::one) {
       return ArmorType::big;
     }
 
